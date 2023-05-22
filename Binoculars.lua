@@ -13,6 +13,7 @@ local fov = (fov_max + fov_min) * 0.5
 local binoculars = false
 local index = 0
 prop_binoc = nil
+local instructions = true
 
 -- INSTRUCTIONAL BUTTONS
 
@@ -101,8 +102,20 @@ function UseBinocular()
         PushScaleformMovieFunctionParameterInt(0)     -- 0 for nothing, 1 for LSPD logo
         PopScaleformMovieFunctionVoid()
 
-        local scaleform_instructions = SetupButtons({ { key = 177, text = 'Exit the binoculars', },
-            { key = 19, text = 'Toggle the vision in the binoculars', }, })
+        local keyList = nil
+        if Config.EnableBinocularVisions then
+            keyList = {
+                { key = 177, text = 'Exit the binoculars' },
+                { key = 19,  text = 'Toggle the vision in the binoculars' },
+                { key = 47,  text = 'Toggle the instructions' }
+            }
+        else
+            keyList = {
+                { key = 177, text = 'Exit the binoculars' },
+                { key = 47,  text = 'Toggle the instructions' }
+            }
+        end
+        local scaleform_instructions = SetupButtons(keyList)
 
         -- MAIN LOOP
         while binoculars and not IsEntityDead(PlayerPedId()) and not IsPedSittingInAnyVehicle(PlayerPedId()) do
@@ -123,7 +136,7 @@ function UseBinocular()
             DisablePlayerFiring(PlayerPedId(), true)     -- Disable weapon firing
 
 
-            if IsControlJustPressed(0, 19) then
+            if IsControlJustPressed(0, 19) and Config.EnableBinocularVisions then
                 -- if index = 0, toggle night vision, if index = 1, toggle thermal vision, if index = 2, toggle normal vision and reset index
                 if index == 0 then
                     SetNightvision(true)
@@ -142,8 +155,20 @@ function UseBinocular()
                 end
             end
 
+            if IsControlJustPressed(0, 47) then
+                if not instructions then
+                    instructions = true
+                    PlaySoundFrontend(-1, "SELECT", "HUD_FRONTEND_DEFAULT_SOUNDSET", false)
+                else
+                    instructions = false
+                    PlaySoundFrontend(-1, "SELECT", "HUD_FRONTEND_DEFAULT_SOUNDSET", false)
+                end
+            end
+
             DrawScaleformMovieFullscreen(scaleform_bin, 255, 255, 255, 255)
-            DrawScaleformMovieFullscreen(scaleform_instructions, 255, 255, 255, 255)
+            if instructions then
+                DrawScaleformMovieFullscreen(scaleform_instructions, 255, 255, 255, 255)
+            end
             Wait(1)
         end
     end
